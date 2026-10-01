@@ -57,6 +57,10 @@ int second = 50;
 
 int timer0_counter = 0;
 int timer0_flag = 0;
+
+int timer1_counter = 0;
+int timer1_flag = 0;
+
 int TIMER_CYCLE = 10;
 /* USER CODE END PV */
 
@@ -72,6 +76,7 @@ void update7SEG(int index);
 void updateClockBuffer(void);
 
 void setTimer0(int duration);
+void setTimer1(int duration);
 void timer_run(void);
 /* USER CODE END PFP */
 
@@ -130,6 +135,7 @@ int main(void)
   // Start Timer 2 interrupt
   HAL_TIM_Base_Start_IT(&htim2);
   setTimer0(1000);
+  setTimer1(250);
 
   /* USER CODE END 2 */
 
@@ -141,9 +147,6 @@ int main(void)
   {
 	  if(timer0_flag == 1)
 	      {
-	          /*
-	           * Increase clock by 1 second
-	           */
 	          second++;
 
 	          if(second >= 60)
@@ -163,23 +166,34 @@ int main(void)
 	              hour = 0;
 	          }
 
-	          /*
-	           * Update data for 4 seven-segment displays
-	           */
 	          updateClockBuffer();
 
-	          /*
-	           * DOT is moved to main in EX7
-	           */
+	          /* DOT is handled in main */
 	          HAL_GPIO_TogglePin(
 	              DOT_GPIO_Port,
 	              DOT_Pin
 	          );
 
-	          /*
-	           * Restart software timer for next 1 second
-	           */
 	          setTimer0(1000);
+	      }
+
+
+	      /*
+	       * TIMER 1
+	       * Scan one 7-segment every 250 ms
+	       */
+	      if(timer1_flag == 1)
+	      {
+	          update7SEG(index_led);
+
+	          index_led++;
+
+	          if(index_led >= MAX_LED)
+	          {
+	              index_led = 0;
+	          }
+
+	          setTimer1(250);
 	      }
     /* USER CODE END WHILE */
 
@@ -474,9 +488,15 @@ void setTimer0(int duration)
     timer0_counter = duration / TIMER_CYCLE;
     timer0_flag = 0;
 }
+void setTimer1(int duration)
+{
+    timer1_counter = duration / TIMER_CYCLE;
+    timer1_flag = 0;
+}
 
 void timer_run(void)
 {
+    /* Timer 0 */
     if(timer0_counter > 0)
     {
         timer0_counter--;
@@ -486,38 +506,26 @@ void timer_run(void)
             timer0_flag = 1;
         }
     }
+
+    /* Timer 1 */
+    if(timer1_counter > 0)
+    {
+        timer1_counter--;
+
+        if(timer1_counter == 0)
+        {
+            timer1_flag = 1;
+        }
+    }
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if(htim->Instance == TIM2)
     {
-        /*
-         * Software timer
-         */
         timer_run();
-
-        /*
-         * 7-segment scanning
-         */
-        counter_7seg++;
-
-        if(counter_7seg >= 25)
-        {
-            counter_7seg = 0;
-
-            update7SEG(index_led);
-
-            index_led++;
-
-            if(index_led >= MAX_LED)
-            {
-                index_led = 0;
-            }
-        }
     }
 }
-
 /* USER CODE END 4 */
 
 
