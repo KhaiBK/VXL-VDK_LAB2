@@ -56,6 +56,9 @@ int hour = 15;
 int minute = 8;
 int second = 50;
 
+int timer0_counter = 0;
+int timer0_flag = 0;
+int TIMER_CYCLE = 10;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -68,6 +71,9 @@ static void MX_TIM2_Init(void);
 void display7SEG(int num);
 void update7SEG(int index);
 void updateClockBuffer(void);
+
+void setTimer0(int duration);
+void timer_run(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -124,6 +130,7 @@ int main(void)
   updateClockBuffer();
   // Start Timer 2 interrupt
   HAL_TIM_Base_Start_IT(&htim2);
+  setTimer0(1000);
 
   /* USER CODE END 2 */
 
@@ -133,6 +140,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  if(timer0_flag == 1)
+	     {
+	         HAL_GPIO_TogglePin(
+	             LED_RED_GPIO_Port,
+	             LED_RED_Pin
+	         );
+
+	         setTimer0(2000);
+	     }
+
 	  second++;
 
 	     if(second >= 60)
@@ -442,10 +459,31 @@ void updateClockBuffer(void)
     led_buffer[3] = minute % 10;
 }
 
+
+void setTimer0(int duration)
+{
+    timer0_counter = duration / TIMER_CYCLE;
+    timer0_flag = 0;
+}
+
+void timer_run(void)
+{
+    if(timer0_counter > 0)
+    {
+        timer0_counter--;
+
+        if(timer0_counter == 0)
+        {
+            timer0_flag = 1;
+        }
+    }
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if(htim->Instance == TIM2)
     {
+    	timer_run();
         counter_7seg++;
         counter_dot++;
 
