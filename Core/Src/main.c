@@ -43,9 +43,14 @@
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
+const int MAX_LED = 4;
+
+int index_led = 0;
+
+int led_buffer[4] = {1, 3, 2, 4};
+
 int counter_7seg = 0;
 int counter_dot = 0;
-int index_led = 0;
 
 /* USER CODE END PV */
 
@@ -299,11 +304,53 @@ void display7SEG(int num)
             HAL_GPIO_WritePin(SEG6_GPIO_Port, SEG6_Pin, GPIO_PIN_RESET);
             break;
 
+        case 4:
+            // Number 4 = b, c, f, g
+            HAL_GPIO_WritePin(SEG1_GPIO_Port, SEG1_Pin, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(SEG2_GPIO_Port, SEG2_Pin, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(SEG5_GPIO_Port, SEG5_Pin, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(SEG6_GPIO_Port, SEG6_Pin, GPIO_PIN_RESET);
+            break;
+
         default:
             break;
     }
 }
 
+void update7SEG(int index)
+{
+    // Turn OFF all 7-segment displays first
+    HAL_GPIO_WritePin(EN0_GPIO_Port, EN0_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(EN2_GPIO_Port, EN2_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(EN3_GPIO_Port, EN3_Pin, GPIO_PIN_SET);
+
+    switch(index)
+    {
+        case 0:
+            display7SEG(led_buffer[0]);
+            HAL_GPIO_WritePin(EN0_GPIO_Port, EN0_Pin, GPIO_PIN_RESET);
+            break;
+
+        case 1:
+            display7SEG(led_buffer[1]);
+            HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_RESET);
+            break;
+
+        case 2:
+            display7SEG(led_buffer[2]);
+            HAL_GPIO_WritePin(EN2_GPIO_Port, EN2_Pin, GPIO_PIN_RESET);
+            break;
+
+        case 3:
+            display7SEG(led_buffer[3]);
+            HAL_GPIO_WritePin(EN3_GPIO_Port, EN3_Pin, GPIO_PIN_RESET);
+            break;
+
+        default:
+            break;
+    }
+}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
@@ -312,53 +359,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         counter_7seg++;
         counter_dot++;
 
+        /*
+         * Keep the 500 ms switching interval
+         * inherited from EX2
+         */
         if(counter_7seg >= 50)
         {
             counter_7seg = 0;
 
-            HAL_GPIO_WritePin(EN0_GPIO_Port, EN0_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(EN2_GPIO_Port, EN2_Pin, GPIO_PIN_SET);
-            HAL_GPIO_WritePin(EN3_GPIO_Port, EN3_Pin, GPIO_PIN_SET);
+            update7SEG(index_led);
 
             index_led++;
 
-            if(index_led >= 4)
+            if(index_led >= MAX_LED)
             {
                 index_led = 0;
             }
-
-            switch(index_led)
-            {
-                case 0:
-                    display7SEG(1);
-                    HAL_GPIO_WritePin(EN0_GPIO_Port, EN0_Pin,
-                                      GPIO_PIN_RESET);
-                    break;
-
-                case 1:
-                    display7SEG(2);
-                    HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin,
-                                      GPIO_PIN_RESET);
-                    break;
-
-                case 2:
-                    display7SEG(3);
-                    HAL_GPIO_WritePin(EN2_GPIO_Port, EN2_Pin,
-                                      GPIO_PIN_RESET);
-                    break;
-
-                case 3:
-                    display7SEG(0);
-                    HAL_GPIO_WritePin(EN3_GPIO_Port, EN3_Pin,
-                                      GPIO_PIN_RESET);
-                    break;
-
-                default:
-                    break;
-            }
         }
 
+        /*
+         * DOT still toggles every 1 second
+         */
         if(counter_dot >= 100)
         {
             counter_dot = 0;
