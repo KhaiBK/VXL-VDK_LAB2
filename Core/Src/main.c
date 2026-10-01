@@ -49,7 +49,6 @@ int index_led = 0;
 int led_buffer[4] = {0, 0, 0, 0};
 
 int counter_7seg = 0;
-int counter_dot = 0;
 
 /* Clock */
 int hour = 15;
@@ -141,37 +140,47 @@ int main(void)
   while (1)
   {
 	  if(timer0_flag == 1)
-	     {
-	         HAL_GPIO_TogglePin(
-	             LED_RED_GPIO_Port,
-	             LED_RED_Pin
-	         );
+	      {
+	          /*
+	           * Increase clock by 1 second
+	           */
+	          second++;
 
-	         setTimer0(2000);
-	     }
+	          if(second >= 60)
+	          {
+	              second = 0;
+	              minute++;
+	          }
 
-	  second++;
+	          if(minute >= 60)
+	          {
+	              minute = 0;
+	              hour++;
+	          }
 
-	     if(second >= 60)
-	     {
-	         second = 0;
-	         minute++;
-	     }
+	          if(hour >= 24)
+	          {
+	              hour = 0;
+	          }
 
-	     if(minute >= 60)
-	     {
-	         minute = 0;
-	         hour++;
-	     }
+	          /*
+	           * Update data for 4 seven-segment displays
+	           */
+	          updateClockBuffer();
 
-	     if(hour >= 24)
-	     {
-	         hour = 0;
-	     }
+	          /*
+	           * DOT is moved to main in EX7
+	           */
+	          HAL_GPIO_TogglePin(
+	              DOT_GPIO_Port,
+	              DOT_Pin
+	          );
 
-	     updateClockBuffer();
-
-	     HAL_Delay(1000);
+	          /*
+	           * Restart software timer for next 1 second
+	           */
+	          setTimer0(1000);
+	      }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -483,14 +492,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if(htim->Instance == TIM2)
     {
-    	timer_run();
-        counter_7seg++;
-        counter_dot++;
+        /*
+         * Software timer
+         */
+        timer_run();
 
         /*
-         * Keep the 500 ms switching interval
-         * inherited from EX2
+         * 7-segment scanning
          */
+        counter_7seg++;
+
         if(counter_7seg >= 25)
         {
             counter_7seg = 0;
@@ -503,19 +514,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             {
                 index_led = 0;
             }
-        }
-
-        /*
-         * DOT still toggles every 1 second
-         */
-        if(counter_dot >= 100)
-        {
-            counter_dot = 0;
-
-            HAL_GPIO_TogglePin(
-                DOT_GPIO_Port,
-                DOT_Pin
-            );
         }
     }
 }
