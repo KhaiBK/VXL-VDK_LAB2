@@ -47,7 +47,7 @@ const int MAX_LED = 4;
 
 int index_led = 0;
 
-int led_buffer[4] = {1, 3, 2, 4};
+int led_buffer[4] = {1, 2, 3, 4};
 
 int counter_7seg = 0;
 int counter_dot = 0;
@@ -363,7 +363,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
          * Keep the 500 ms switching interval
          * inherited from EX2
          */
-        if(counter_7seg >= 50)
+        if(counter_7seg >= 25)
         {
             counter_7seg = 0;
 
