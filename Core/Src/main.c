@@ -80,6 +80,9 @@ int timer1_flag = 0;
 int timer2_counter = 0;
 int timer2_flag = 0;
 
+int timer3_counter = 0;
+int timer3_flag = 0;
+
 int TIMER_CYCLE = 10;
 /* USER CODE END PV */
 
@@ -99,6 +102,8 @@ void setTimer1(int duration);
 void timer_run(void);
 void updateLEDMatrix(int index);
 void setTimer2(int duration);
+void setTimer3(int duration);
+void shiftMatrixLeft(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -153,6 +158,7 @@ int main(void)
     setTimer0(1000);
     setTimer1(250);
     setTimer2(10);
+    setTimer3(500);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -221,6 +227,13 @@ int main(void)
 	          }
 
 	          setTimer2(10);
+	      }
+
+	      if(timer3_flag == 1)
+	      {
+	          shiftMatrixLeft();
+
+	          setTimer3(500);
 	      }
     /* USER CODE END WHILE */
 
@@ -666,6 +679,19 @@ void updateLEDMatrix(int index)
             break;
     }
 }
+
+void shiftMatrixLeft(void)
+{
+    uint8_t temp = matrix_buffer[0];
+
+    for(int i = 0; i < 7; i++)
+    {
+        matrix_buffer[i] = matrix_buffer[i + 1];
+    }
+
+    matrix_buffer[7] = temp;
+}
+
 void setTimer0(int duration)
 {
     timer0_counter = duration / TIMER_CYCLE;
@@ -681,6 +707,12 @@ void setTimer2(int duration)
 {
     timer2_counter = duration / TIMER_CYCLE;
     timer2_flag = 0;
+}
+
+void setTimer3(int duration)
+{
+    timer3_counter = duration / TIMER_CYCLE;
+    timer3_flag = 0;
 }
 
 void timer_run(void)
@@ -715,6 +747,16 @@ void timer_run(void)
         if(timer2_counter == 0)
         {
             timer2_flag = 1;
+        }
+    }
+
+    if(timer3_counter > 0)
+    {
+        timer3_counter--;
+
+        if(timer3_counter == 0)
+        {
+            timer3_flag = 1;
         }
     }
 }
